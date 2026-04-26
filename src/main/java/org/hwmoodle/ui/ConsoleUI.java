@@ -14,8 +14,9 @@ public class ConsoleUI {
             System.out.println("1. Создать пользователя");
             System.out.println("2. Найти по ID");
             System.out.println("3. Обновить имя");
-            System.out.println("4. Удалить");
-            System.out.println("5. Выход");
+            System.out.println("4. Вывести всех пользователей");
+            System.out.println("5. Удалить");
+            System.out.println("6. Выход");
             System.out.print("Выберите действие: ");
 
             int choice = scanner.nextInt();
@@ -39,10 +40,13 @@ public class ConsoleUI {
                     userService.updateUserName(id, newName);
                 }
                 case 4 -> {
+                    userService.findAllUsers().forEach(System.out::println);
+                }
+                case 5 -> {
                     System.out.print("Введите ID для удаления: ");
                     userService.removeUser(scanner.nextLong());
                 }
-                case 5 -> {
+                case 6 -> {
                     System.out.println("Завершение работы...");
                     return;
                 }

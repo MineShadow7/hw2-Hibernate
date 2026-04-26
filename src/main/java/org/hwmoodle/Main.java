@@ -10,7 +10,6 @@ public class Main {
             ConsoleUI ui = new ConsoleUI();
             ui.start();
         } finally {
-            // Важно закрыть фабрику сессий при выходе
             HibernateUtil.shutdown();
         }
     }
