@@ -19,24 +19,24 @@ public class ConsoleUI {
             System.out.println("6. Выход");
             System.out.print("Выберите действие: ");
 
-            int choice = scanner.nextInt();
-            scanner.nextLine(); // очистка буфера
+            int choice = readInt();
 
             switch (choice) {
                 case 1 -> {
                     System.out.print("Имя: "); String name = scanner.nextLine();
                     System.out.print("Email: "); String email = scanner.nextLine();
-                    System.out.print("Возраст: "); int age = scanner.nextInt();
+                    System.out.print("Возраст: "); int age = readInt();
                     userService.createNewUser(name, email, age);
                 }
                 case 2 -> {
                     System.out.print("Введите ID: ");
-                    userService.printUserInfo(scanner.nextLong());
+                    userService.printUserInfo(readLong());
                 }
                 case 3 -> {
-                    System.out.print("Введите ID: "); Long id = scanner.nextLong();
-                    scanner.nextLine();
-                    System.out.print("Новое имя: "); String newName = scanner.nextLine();
+                    System.out.print("Введите ID: ");
+                    Long id = readLong();
+                    System.out.print("Новое имя: ");
+                    String newName = scanner.nextLine();
                     userService.updateUserName(id, newName);
                 }
                 case 4 -> {
@@ -44,13 +44,33 @@ public class ConsoleUI {
                 }
                 case 5 -> {
                     System.out.print("Введите ID для удаления: ");
-                    userService.removeUser(scanner.nextLong());
+                    userService.removeUser(readLong());
                 }
                 case 6 -> {
                     System.out.println("Завершение работы...");
                     return;
                 }
-                default -> System.out.println("Неверный ввод!");
+                default -> System.out.println("Неверный ввод. Ввод быть в виде целочисленного значения от 1 до 6.");
+            }
+        }
+    }
+
+    private int readInt(){
+        while(true){
+            try{
+                return Integer.parseInt(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Ошибка значения. Введите целое число.");
+            }
+        }
+    }
+
+    private Long readLong(){
+        while(true){
+            try{
+                return Long.parseLong(scanner.nextLine());
+            } catch (NumberFormatException e) {
+                System.out.println("Ошибка значения. ID должен быть числом.");
             }
         }
     }
