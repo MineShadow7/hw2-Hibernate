@@ -76,7 +76,7 @@ public class User {
 
     @Override
     public String toString() {
-        return String.format("User[id=%d, name='%s', email='%s', age=%d, created=%s]",
+        return String.format("User ID=%d:, \n Имя='%s', \n Email='%s', \n Age=%d, \n Created=%s]",
                 id, name, email, age, createdAt);
     }
 }

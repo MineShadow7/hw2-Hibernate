@@ -7,6 +7,7 @@ import org.hwmoodle.model.User;
 
 public class HibernateUtil {
     private static SessionFactory sessionFactory;
+    private static String initializationError = null;
 
     public static SessionFactory getSessionFactory() {
         if (sessionFactory == null) {
@@ -17,12 +18,25 @@ public class HibernateUtil {
 
                 sessionFactory = configuration.buildSessionFactory();
             } catch (Throwable ex) {
-                // Make sure you log the exception, as it might be swallowed
+                initializationError = ex.getMessage();
                 System.err.println("Ошибка инициализации SessionFactory: " + ex.getMessage());
                 throw new ExceptionInInitializerError(ex);
             }
         }
         return sessionFactory;
+    }
+
+    public static boolean isDatabaseAvailable() {
+        try {
+            getSessionFactory();
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    public static String getInitializationError() {
+        return initializationError;
     }
 
     public static void shutdown(){
