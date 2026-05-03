@@ -18,6 +18,7 @@ public class Main {
                 System.exit(1);
             }
 
+
             ConsoleUI ui = new ConsoleUI();
             ui.start();
         } catch (Exception e) {
