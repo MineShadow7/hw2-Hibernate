@@ -1,21 +1,18 @@
 package org.hwmoodle.ui;
 
-import org.hwmoodle.config.HibernateUtil;
 import org.hwmoodle.service.UserService;
 
 import java.util.Scanner;
 
 public class ConsoleUI {
-    private final UserService userService = new UserService();
+    private final UserService userService;
     private final Scanner scanner = new Scanner(System.in);
 
-    public void start() {
+    public ConsoleUI(UserService userService) {
+        this.userService = userService;
+    }
 
-        if (!HibernateUtil.isDatabaseAvailable()) {
-            System.err.println("ОШИБКА: Не удалось подключиться к базе данных!");
-            System.err.println("Приложение будет завершено.");
-            return;
-        }
+    public void start() {
         System.out.println("Успешное подключение к базе данных!");
 
         while (true) {
@@ -30,17 +27,6 @@ public class ConsoleUI {
                 System.out.print("Выберите действие: ");
 
                 int choice = readInt();
-
-                if (!HibernateUtil.isDatabaseAvailable()) {
-                    System.err.println("ОШИБКА: Соединение с базой данных потеряно!");
-                    System.err.println("Пожалуйста, проверьте статус Docker контейнера.");
-                    System.out.print("Хотите повторить попытку? (y/n): ");
-                    if (scanner.nextLine().equalsIgnoreCase("y")) {
-                        continue;
-                    } else {
-                        break;
-                    }
-                }
 
                 switch (choice) {
                     case 1 -> {
