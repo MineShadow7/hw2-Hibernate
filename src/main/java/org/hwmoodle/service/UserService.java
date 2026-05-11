@@ -1,5 +1,8 @@
 package org.hwmoodle.service;
 
+import org.hwmoodle.dto.UserRequestDto;
+import org.hwmoodle.dto.UserResponseDto;
+import org.hwmoodle.mapper.UserMapper;
 import org.hwmoodle.model.User;
 import org.hwmoodle.repository.UserRepository;
 import org.springframework.stereotype.Service;
@@ -7,6 +10,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 @Service
@@ -88,5 +92,29 @@ public class UserService {
         }
 
         return userRepository.findAll();
+    }
+
+    public UserResponseDto createUser(UserRequestDto request) {
+        User user = UserMapper.toEntity(request);
+        return UserMapper.toDto(userRepository.save(user));
+    }
+
+    public Optional<UserResponseDto> getUser(Long id) {
+        return userRepository.findById(id).map(UserMapper::toDto);
+    }
+
+    public Optional<UserResponseDto> updateUser(Long id, UserRequestDto request) {
+        return userRepository.findById(id).map(existing -> {
+            UserMapper.apply(existing, request);
+            return UserMapper.toDto(userRepository.save(existing));
+        });
+    }
+
+    public void deleteUser(Long id) {
+        userRepository.deleteById(id);
+    }
+
+    public List<UserResponseDto> listUsers() {
+        return userRepository.findAll().stream().map(UserMapper::toDto).toList();
     }
 }
