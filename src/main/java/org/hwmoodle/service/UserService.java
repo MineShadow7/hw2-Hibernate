@@ -5,6 +5,7 @@ import org.hwmoodle.dto.UserResponseDto;
 import org.hwmoodle.mapper.UserMapper;
 import org.hwmoodle.model.User;
 import org.hwmoodle.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -18,11 +19,12 @@ public class UserService {
     private final UserRepository userRepository;
     private final Supplier<Boolean> dbAvailableSupplier;
 
+    @Autowired
     public UserService(UserRepository userRepository) {
         this(userRepository, () -> true);
     }
 
-    public UserService(UserRepository userRepository, Supplier<Boolean> dbAvailableSupplier) {
+    UserService(UserRepository userRepository, Supplier<Boolean> dbAvailableSupplier) {
         this.userRepository = Objects.requireNonNull(userRepository, "userRepository");
         this.dbAvailableSupplier = Objects.requireNonNull(dbAvailableSupplier, "dbAvailableSupplier");
     }
