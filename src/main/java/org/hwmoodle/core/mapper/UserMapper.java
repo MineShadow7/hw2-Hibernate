@@ -1,8 +1,8 @@
-package org.hwmoodle.mapper;
+package org.hwmoodle.core.mapper;
 
-import org.hwmoodle.dto.UserRequestDto;
-import org.hwmoodle.dto.UserResponseDto;
-import org.hwmoodle.model.User;
+import org.hwmoodle.core.dto.UserRequestDto;
+import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.model.User;
 
 public final class UserMapper {
     private UserMapper() {

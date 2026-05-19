@@ -1,9 +1,9 @@
 package org.hwmoodle.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.hwmoodle.dto.UserRequestDto;
-import org.hwmoodle.dto.UserResponseDto;
-import org.hwmoodle.service.UserService;
+import org.hwmoodle.core.dto.UserRequestDto;
+import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;

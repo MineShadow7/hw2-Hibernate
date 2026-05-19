@@ -1,6 +1,6 @@
 package org.hwmoodle.repository;
 
-import org.hwmoodle.model.User;
+import org.hwmoodle.core.model.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

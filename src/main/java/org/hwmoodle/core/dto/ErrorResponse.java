@@ -1,4 +1,4 @@
-package org.hwmoodle.dto;
+package org.hwmoodle.core.dto;
 
 import java.util.Map;
 

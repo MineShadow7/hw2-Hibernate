@@ -1,15 +1,13 @@
 package org.hwmoodle.testutil;
 
-import org.hibernate.Session;
-import org.hibernate.Transaction;
-import org.hwmoodle.config.HibernateUtil;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
-import org.junit.jupiter.api.AfterAll;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 
+@SpringBootTest
 @Testcontainers
 public abstract class IntegrationTestBase {
     @Container
@@ -18,25 +16,12 @@ public abstract class IntegrationTestBase {
             .withUsername("test")
             .withPassword("test");
 
-    @BeforeAll
-    static void initDatabaseProperties() {
-        System.setProperty("test.db.url", POSTGRES.getJdbcUrl());
-        System.setProperty("test.db.username", POSTGRES.getUsername());
-        System.setProperty("test.db.password", POSTGRES.getPassword());
-    }
-
-    @BeforeEach
-    void cleanDatabase() {
-        try (Session session = HibernateUtil.getSessionFactory().openSession()) {
-            Transaction transaction = session.beginTransaction();
-            session.createMutationQuery("delete from User").executeUpdate();
-            transaction.commit();
-        }
-    }
-
-    @AfterAll
-    static void shutdown() {
-        HibernateUtil.shutdown();
+    @DynamicPropertySource
+    static void registerProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 }
 

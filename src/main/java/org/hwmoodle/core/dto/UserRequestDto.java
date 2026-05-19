@@ -1,4 +1,4 @@
-package org.hwmoodle.dto;
+package org.hwmoodle.core.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Min;

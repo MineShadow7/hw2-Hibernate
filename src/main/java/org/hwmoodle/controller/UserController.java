@@ -1,9 +1,9 @@
 package org.hwmoodle.controller;
 
 import jakarta.validation.Valid;
-import org.hwmoodle.dto.UserRequestDto;
-import org.hwmoodle.dto.UserResponseDto;
-import org.hwmoodle.service.UserService;
+import org.hwmoodle.core.dto.UserRequestDto;
+import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 

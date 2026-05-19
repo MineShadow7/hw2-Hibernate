@@ -1,139 +1,127 @@
 package org.hwmoodle.service;
 
-import org.hwmoodle.model.User;
+import org.hwmoodle.core.dto.UserRequestDto;
+import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.model.User;
+import org.hwmoodle.core.service.UserService;
 import org.hwmoodle.repository.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class UserServiceTest {
+    @Mock
     private UserRepository userRepository;
-    private Supplier<Boolean> dbAvailable;
+
+    @InjectMocks
     private UserService userService;
+
+    private User testUser;
+    private UserRequestDto userRequestDto;
 
     @BeforeEach
     void setUp() {
-        userRepository = mock(UserRepository.class);
-        dbAvailable = () -> true;
-        userService = new UserService(userRepository, dbAvailable);
+        testUser = new User(1L, "Alice", "alice@example.com", 25, LocalDateTime.now());
+        userRequestDto = new UserRequestDto("Alice", "alice@example.com", 25);
     }
 
     @Test
-    void createNewUserReturnsFalseWhenDbUnavailable() {
-        userService = new UserService(userRepository, () -> false);
+    void createUserSuccessfully() {
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        boolean result = userService.createNewUser("Alice", "alice@example.com", 25);
+        UserResponseDto result = userService.createUser(userRequestDto);
 
-        assertFalse(result);
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void createNewUserReturnsFalseForInvalidEmail() {
-        boolean result = userService.createNewUser("Alice", "invalid", 25);
-
-        assertFalse(result);
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void createNewUserSavesValidUser() {
-        boolean result = userService.createNewUser("Alice", "alice@example.com", 25);
-
-        assertTrue(result);
+        assertNotNull(result);
+        assertEquals("alice@example.com", result.email());
         verify(userRepository).save(any(User.class));
     }
 
     @Test
-    void updateUserNameDoesNothingWhenDbUnavailable() {
-        userService = new UserService(userRepository, () -> false);
+    void createUserThrowsExceptionForInvalidEmail() {
+        UserRequestDto invalidDto = new UserRequestDto("Alice", "invalid", 25);
 
-        userService.updateUserName(1L, "NewName");
-
-        verifyNoInteractions(userRepository);
+        assertThrows(IllegalArgumentException.class, () -> userService.createUser(invalidDto));
     }
 
     @Test
-    void updateUserNameDoesNothingWhenUserMissing() {
-        when(userRepository.findById(1L)).thenReturn(Optional.empty());
+    void getUserReturnsUserWhenFound() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-        userService.updateUserName(1L, "NewName");
+        Optional<UserResponseDto> result = userService.getUser(1L);
 
-        verify(userRepository).findById(1L);
+        assertTrue(result.isPresent());
+        assertEquals("alice@example.com", result.get().email());
+    }
+
+    @Test
+    void getUserReturnsEmptyWhenNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Optional<UserResponseDto> result = userService.getUser(999L);
+
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    void updateUserSuccessfully() {
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
+        when(userRepository.save(any(User.class))).thenReturn(testUser);
+
+        Optional<UserResponseDto> result = userService.updateUser(1L, userRequestDto);
+
+        assertTrue(result.isPresent());
+        verify(userRepository).save(testUser);
+    }
+
+    @Test
+    void updateUserReturnsEmptyWhenNotFound() {
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
+
+        Optional<UserResponseDto> result = userService.updateUser(999L, userRequestDto);
+
+        assertTrue(result.isEmpty());
         verify(userRepository, never()).save(any(User.class));
     }
 
     @Test
-    void updateUserNameUpdatesWhenUserFound() {
-        User user = new User("Bob", "bob@example.com", 30);
-        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+    void deleteUserSuccessfully() {
+        when(userRepository.existsById(1L)).thenReturn(true);
 
-        userService.updateUserName(1L, "Bobby");
+        userService.deleteUser(1L);
 
-        assertEquals("Bobby", user.getName());
-        verify(userRepository).save(user);
+        verify(userRepository).deleteById(1L);
     }
 
     @Test
-    void removeUserDoesNothingWhenDbUnavailable() {
-        userService = new UserService(userRepository, () -> false);
+    void deleteUserDoesNothingWhenNotFound() {
+        when(userRepository.existsById(999L)).thenReturn(false);
 
-        userService.removeUser(1L);
+        userService.deleteUser(999L);
 
-        verifyNoInteractions(userRepository);
+        verify(userRepository, never()).deleteById(any());
     }
 
     @Test
-    void removeUserDeletesWhenDbAvailable() {
-        userService.removeUser(5L);
+    void listUsersReturnsAllUsers() {
+        List<User> users = List.of(testUser);
+        when(userRepository.findAll()).thenReturn(users);
 
-        verify(userRepository).deleteById(5L);
-    }
+        List<UserResponseDto> result = userService.listUsers();
 
-    @Test
-    void findAllUsersReturnsEmptyWhenDbUnavailable() {
-        userService = new UserService(userRepository, () -> false);
-
-        List<User> users = userService.findAllUsers();
-
-        assertNotNull(users);
-        assertTrue(users.isEmpty());
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void findAllUsersReturnsDaoResult() {
-        List<User> expected = List.of(new User("Dan", "dan@example.com", 21));
-        when(userRepository.findAll()).thenReturn(expected);
-
-        List<User> users = userService.findAllUsers();
-
-        assertSame(expected, users);
+        assertNotNull(result);
+        assertEquals(1, result.size());
         verify(userRepository).findAll();
-    }
-
-    @Test
-    void printUserInfoDoesNothingWhenDbUnavailable() {
-        userService = new UserService(userRepository, () -> false);
-
-        userService.printUserInfo(1L);
-
-        verifyNoInteractions(userRepository);
-    }
-
-    @Test
-    void printUserInfoLoadsUserWhenDbAvailable() {
-        when(userRepository.findById(2L)).thenReturn(Optional.of(new User("Eve", "eve@example.com", 22)));
-
-        userService.printUserInfo(2L);
-
-        verify(userRepository).findById(2L);
     }
 }

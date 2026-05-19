@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${DB_URL:jdbc:postgresql://localhost:5432/users_db}
-    username: ${DB_USERNAME:postgres}
-    password: ${DB_PASSWORD:postgres}
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/user_db}
+    username: ${DB_USERNAME:admin}
+    password: ${DB_PASSWORD:password}
   jpa:
     hibernate:
       ddl-auto: update
@@ -13,3 +13,10 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+logging:
+  level:
+    org.hwmoodle: DEBUG
+    org.springframework.web: INFO
+    org.springframework.data: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
