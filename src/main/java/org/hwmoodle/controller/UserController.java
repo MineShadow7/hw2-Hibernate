@@ -12,20 +12,27 @@ import org.hwmoodle.core.dto.ErrorResponse;
 import org.hwmoodle.core.dto.UserRequestDto;
 import org.hwmoodle.core.dto.UserResponseDto;
 import org.hwmoodle.core.service.UserService;
+import org.springframework.hateoas.CollectionModel;
+import org.springframework.hateoas.EntityModel;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 @RestController
 @RequestMapping("/api/users")
 @Tag(name = "Users", description = "User management API")
 public class UserController {
     private final UserService userService;
+    private final UserModelAssembler userModelAssembler;
 
-    public UserController(UserService userService) {
+    public UserController(UserService userService, UserModelAssembler userModelAssembler) {
         this.userService = userService;
+        this.userModelAssembler = userModelAssembler;
     }
 
     @GetMapping
@@ -33,8 +40,14 @@ public class UserController {
     @ApiResponses({
             @ApiResponse(responseCode = "200", description = "List of users")
     })
-    public List<UserResponseDto> listUsers() {
-        return userService.listUsers();
+    public CollectionModel<EntityModel<UserResponseDto>> listUsers() {
+        List<EntityModel<UserResponseDto>> users = userService.listUsers().stream()
+                .map(userModelAssembler::toModel)
+                .toList();
+        return CollectionModel.of(
+                users,
+                linkTo(methodOn(UserController.class).listUsers()).withSelfRel()
+        );
     }
 
     @GetMapping("/{id}")
@@ -43,11 +56,12 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "User found"),
             @ApiResponse(responseCode = "404", description = "User not found")
     })
-    public ResponseEntity<UserResponseDto> getUser(
+    public ResponseEntity<EntityModel<UserResponseDto>> getUser(
             @Parameter(description = "User id", required = true)
             @PathVariable Long id
     ) {
         return userService.getUser(id)
+                .map(userModelAssembler::toModel)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
@@ -61,9 +75,10 @@ public class UserController {
             @ApiResponse(responseCode = "409", description = "Data integrity violation",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody UserRequestDto request) {
+    public ResponseEntity<EntityModel<UserResponseDto>> createUser(@Valid @RequestBody UserRequestDto request) {
         UserResponseDto created = userService.createUser(request);
-        return ResponseEntity.created(URI.create("/api/users/" + created.id())).body(created);
+        EntityModel<UserResponseDto> model = userModelAssembler.toModel(created);
+        return ResponseEntity.created(URI.create("/api/users/" + created.id())).body(model);
     }
 
     @PutMapping("/{id}")
@@ -76,12 +91,13 @@ public class UserController {
             @ApiResponse(responseCode = "409", description = "Data integrity violation",
                     content = @Content(schema = @Schema(implementation = ErrorResponse.class)))
     })
-    public ResponseEntity<UserResponseDto> updateUser(
+    public ResponseEntity<EntityModel<UserResponseDto>> updateUser(
             @Parameter(description = "User id", required = true)
             @PathVariable Long id,
             @Valid @RequestBody UserRequestDto request
     ) {
         return userService.updateUser(id, request)
+                .map(userModelAssembler::toModel)
                 .map(ResponseEntity::ok)
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }

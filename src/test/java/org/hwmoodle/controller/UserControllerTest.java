@@ -19,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -45,7 +46,7 @@ class UserControllerTest {
         LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
         validator.afterPropertiesSet();
 
-        UserController controller = new UserController(userService);
+        UserController controller = new UserController(userService, new UserModelAssembler());
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new RestExceptionHandler())
                 .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
@@ -62,8 +63,10 @@ class UserControllerTest {
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].email").value("alice@example.com"));
+                .andExpect(jsonPath("$._embedded.users[0].id").value(1L))
+                .andExpect(jsonPath("$._embedded.users[0].email").value("alice@example.com"))
+                .andExpect(jsonPath("$._embedded.users[0]._links.self.href").value(endsWith("/api/users/1")))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users")));
     }
 
     @Test
@@ -82,7 +85,8 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users/2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(2L))
-                .andExpect(jsonPath("$.name").value("Bob"));
+                .andExpect(jsonPath("$.name").value("Bob"))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/2")));
     }
 
     @Test
@@ -96,7 +100,8 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/users/5"))
-                .andExpect(jsonPath("$.id").value(5L));
+                .andExpect(jsonPath("$.id").value(5L))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/5")));
     }
 
     @Test
@@ -134,7 +139,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(3L));
+                .andExpect(jsonPath("$.id").value(3L))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/3")));
     }
 
     @Test
