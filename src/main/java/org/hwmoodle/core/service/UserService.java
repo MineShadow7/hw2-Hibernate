@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hwmoodle.core.dto.UserRequestDto;
 import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.kafka.UserNotificationPublisher;
 import org.hwmoodle.core.mapper.UserMapper;
 import org.hwmoodle.core.model.User;
 import org.hwmoodle.repository.UserRepository;
@@ -18,6 +19,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserService {
     private final UserRepository userRepository;
+    private final UserNotificationPublisher notificationPublisher;
 
     @Transactional
     public UserResponseDto createUser(UserRequestDto request) {
@@ -29,6 +31,9 @@ public class UserService {
         User user = UserMapper.toEntity(request);
         User saved = userRepository.save(user);
         log.info("User created successfully with id: {}", saved.getId());
+
+        notificationPublisher.publishUserCreatedEvent(saved.getEmail());
+
         return UserMapper.toDto(saved);
     }
 
@@ -58,9 +63,13 @@ public class UserService {
     @Transactional
     public void deleteUser(Long id) {
         log.info("Deleting user with id: {}", id);
-        if (userRepository.existsById(id)) {
+        Optional<User> userOpt = userRepository.findById(id);
+        if (userOpt.isPresent()) {
+            User user = userOpt.get();
+            String email = user.getEmail();
             userRepository.deleteById(id);
             log.info("User deleted successfully with id: {}", id);
+            notificationPublisher.publishUserDeletedEvent(email);
         } else {
             log.warn("User not found for deletion with id: {}", id);
         }

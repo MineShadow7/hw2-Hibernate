@@ -2,6 +2,7 @@ package org.hwmoodle.service;
 
 import org.hwmoodle.core.dto.UserRequestDto;
 import org.hwmoodle.core.dto.UserResponseDto;
+import org.hwmoodle.core.kafka.UserNotificationPublisher;
 import org.hwmoodle.core.model.User;
 import org.hwmoodle.core.service.UserService;
 import org.hwmoodle.repository.UserRepository;
@@ -25,6 +26,9 @@ class UserServiceTest {
     @Mock
     private UserRepository userRepository;
 
+    @Mock
+    private UserNotificationPublisher notificationPublisher;
+
     @InjectMocks
     private UserService userService;
 
@@ -46,6 +50,7 @@ class UserServiceTest {
         assertNotNull(result);
         assertEquals("alice@example.com", result.email());
         verify(userRepository).save(any(User.class));
+        verify(notificationPublisher).publishUserCreatedEvent("alice@example.com");
     }
 
     @Test
@@ -53,6 +58,7 @@ class UserServiceTest {
         UserRequestDto invalidDto = new UserRequestDto("Alice", "invalid", 25);
 
         assertThrows(IllegalArgumentException.class, () -> userService.createUser(invalidDto));
+        verify(notificationPublisher, never()).publishUserCreatedEvent(any());
     }
 
     @Test
@@ -97,20 +103,22 @@ class UserServiceTest {
 
     @Test
     void deleteUserSuccessfully() {
-        when(userRepository.existsById(1L)).thenReturn(true);
+        when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
         userService.deleteUser(1L);
 
         verify(userRepository).deleteById(1L);
+        verify(notificationPublisher).publishUserDeletedEvent("alice@example.com");
     }
 
     @Test
     void deleteUserDoesNothingWhenNotFound() {
-        when(userRepository.existsById(999L)).thenReturn(false);
+        when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
         userService.deleteUser(999L);
 
         verify(userRepository, never()).deleteById(any());
+        verify(notificationPublisher, never()).publishUserDeletedEvent(any());
     }
 
     @Test
