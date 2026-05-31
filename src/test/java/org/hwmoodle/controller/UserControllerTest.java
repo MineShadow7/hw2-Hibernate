@@ -4,16 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hwmoodle.core.dto.UserRequestDto;
 import org.hwmoodle.core.dto.UserResponseDto;
 import org.hwmoodle.core.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -31,28 +28,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(UserController.class)
+@Import({UserModelAssembler.class, RestExceptionHandler.class})
 class UserControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
-    @Mock
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    @MockitoBean
     private UserService userService;
-
-    @BeforeEach
-    void setUp() {
-        objectMapper = new ObjectMapper().findAndRegisterModules();
-        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-        validator.afterPropertiesSet();
-
-        UserController controller = new UserController(userService, new UserModelAssembler());
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new RestExceptionHandler())
-                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-                .setValidator(validator)
-                .build();
-    }
 
     @Test
     void listUsersReturnsData() throws Exception {
