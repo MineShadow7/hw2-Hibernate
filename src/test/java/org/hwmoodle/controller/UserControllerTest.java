@@ -4,21 +4,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hwmoodle.core.dto.UserRequestDto;
 import org.hwmoodle.core.dto.UserResponseDto;
 import org.hwmoodle.core.service.UserService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
-import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.validation.beanvalidation.LocalValidatorFactoryBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import static org.hamcrest.Matchers.endsWith;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -30,28 +28,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@ExtendWith(MockitoExtension.class)
+@WebMvcTest(UserController.class)
+@Import({UserModelAssembler.class, RestExceptionHandler.class})
 class UserControllerTest {
 
+    @Autowired
     private MockMvc mockMvc;
-    private ObjectMapper objectMapper;
 
-    @Mock
+    private final ObjectMapper objectMapper = new ObjectMapper().findAndRegisterModules();
+
+    @MockitoBean
     private UserService userService;
-
-    @BeforeEach
-    void setUp() {
-        objectMapper = new ObjectMapper().findAndRegisterModules();
-        LocalValidatorFactoryBean validator = new LocalValidatorFactoryBean();
-        validator.afterPropertiesSet();
-
-        UserController controller = new UserController(userService);
-        mockMvc = MockMvcBuilders.standaloneSetup(controller)
-                .setControllerAdvice(new RestExceptionHandler())
-                .setMessageConverters(new MappingJackson2HttpMessageConverter(objectMapper))
-                .setValidator(validator)
-                .build();
-    }
 
     @Test
     void listUsersReturnsData() throws Exception {
@@ -62,8 +49,10 @@ class UserControllerTest {
 
         mockMvc.perform(get("/api/users"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].id").value(1L))
-                .andExpect(jsonPath("$[0].email").value("alice@example.com"));
+                .andExpect(jsonPath("$._embedded.users[0].id").value(1L))
+                .andExpect(jsonPath("$._embedded.users[0].email").value("alice@example.com"))
+                .andExpect(jsonPath("$._embedded.users[0]._links.self.href").value(endsWith("/api/users/1")))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users")));
     }
 
     @Test
@@ -82,7 +71,8 @@ class UserControllerTest {
         mockMvc.perform(get("/api/users/2"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(2L))
-                .andExpect(jsonPath("$.name").value("Bob"));
+                .andExpect(jsonPath("$.name").value("Bob"))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/2")));
     }
 
     @Test
@@ -96,7 +86,8 @@ class UserControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(header().string("Location", "/api/users/5"))
-                .andExpect(jsonPath("$.id").value(5L));
+                .andExpect(jsonPath("$.id").value(5L))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/5")));
     }
 
     @Test
@@ -134,7 +125,8 @@ class UserControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(3L));
+                .andExpect(jsonPath("$.id").value(3L))
+                .andExpect(jsonPath("$._links.self.href").value(endsWith("/api/users/3")));
     }
 
     @Test

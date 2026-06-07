@@ -1,4 +1,6 @@
 spring:
+  application:
+    name: user-service
   datasource:
     url: jdbc:postgresql://user-service-db:5432/user_db
     username: admin
@@ -15,8 +17,20 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+  autoconfigure:
+    exclude:
+      - org.springdoc.core.configuration.SpringDocHateoasConfiguration
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${spring.application.instance_id:${random.value}}
+
 server:
-  port: 8080
+  port: 8081
 
 logging:
   level:
@@ -29,3 +43,33 @@ logging:
 app:
   notification:
     topic: user-events
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+  health:
+    circuitbreakers:
+      enabled: true
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      notificationServiceCB:
+        register-health-indicator: true
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10000
+        permitted-number-of-calls-in-half-open-state: 3
+        slow-call-rate-threshold: 100
+        slow-call-duration-threshold: 2000
+  timelimiter:
+    instances:
+      notificationServiceCB:
+        cancel-running-future: true
+        timeout-duration: 5000
+
